@@ -41,17 +41,17 @@ Apply approved GIQO outputs and task work to the project.
 1. Confirm the active run and target outputs.
 2. Compare generated outputs with existing files.
 3. Refuse source edits unless the apply boundary is satisfied.
-4. When applying a Task, update its status to `running` before modifying docs, artifacts, or source.
+4. When applying a Task, run `scripts/set-task-status.mjs --plan-id <plan-id> --task-id <task-id> --status running` before modifying docs, artifacts, or source.
 5. When applying a saved UI edit request, update its status to `running` in `.giqo/ui-review/<screen>/` before modifying docs, artifacts, or source.
 6. Write approved docs and review assets.
 7. For allowed source edits, make only the named changes.
 8. Run the checks named in the plan when source edits occur.
-9. Record changed files, verification, manual QA, and notes in task evidence.
+9. Record changed files, verification, manual QA, and notes in task evidence with `scripts/set-task-status.mjs`.
 10. Mark each attempted Task and UI request `applied` or `failed` after the work and preserve the reason for failures.
 11. If the user asks to apply UI edits or tasks but no saved items exist, stop with a state report instead of making speculative changes.
 
 ## Completion report
 
-Report files written, files skipped, task status changes, checks run, and any apply items left for a human or implementation agent.
+Report files written, files skipped, task status changes, checks run, and any apply items left for a human or implementation agent. If a Plan id is known, end with the inline status from `scripts/show-plan-status.mjs`.
 
 If there is nothing to apply, say so directly, for example: `No saved UI edit requests were found, so no UI changes were applied.`

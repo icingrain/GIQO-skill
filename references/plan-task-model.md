@@ -126,6 +126,16 @@ Recommended fields:
 
 Do not use task evidence to store secrets, large logs, or full diffs.
 
+Update a single Task status and append evidence with:
+
+```bash
+node scripts/set-task-status.mjs --plan-id <plan-id> --task-id <task-id> --status running
+node scripts/set-task-status.mjs --plan-id <plan-id> --task-id <task-id> --status applied --changed-file README.md --verification "node --test passed"
+node scripts/set-task-status.mjs --plan-id <plan-id> --task-id <task-id> --status failed --note "Blocked by missing input"
+```
+
+Agents should use this helper during `/giqo-skill apply`: mark the task `running` before work starts, then mark it `applied` or `failed` with evidence when the attempt ends. This is the step that makes `tasks.json` change immediately; dashboards and inline status only re-read that state.
+
 Saved Visual Review requests can be promoted into tasks with:
 
 ```bash
