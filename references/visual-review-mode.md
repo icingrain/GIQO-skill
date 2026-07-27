@@ -4,7 +4,7 @@ Visual Review Mode makes wireframes, mockups, and proxied actual screens editabl
 
 ## Behavior
 
-1. Open `wireframe.html` or `mockup.html` with `node scripts/open-visual-review.mjs`.
+1. Serve `wireframe.html` or `mockup.html` with `node scripts/open-visual-review.mjs`; open the printed URL through the agent/browser surface, or pass `--open` only when direct OS browser launch is desired.
 2. Hover reviewable elements to see a highlight.
 3. Click a reviewable element, choose it from the Target dropdown, or choose Global.
 4. Write a UI edit request with severity.

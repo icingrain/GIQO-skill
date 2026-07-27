@@ -15,11 +15,13 @@ live review에서는 GIQO 툴바, 패널, 저장된 요청 목록, 오버레이 
 
 아래 명령은 agent 또는 고급 사용자를 위한 구현 상세입니다. 메인 README에서는 프롬프트 기반 사용 흐름만 보여줍니다.
 
-기본 생성 리뷰 화면 열기:
+기본 생성 리뷰 서버 실행:
 
 ```bash
 node scripts/open-visual-review.mjs templates/visual-review/mockup.html
 ```
+
+명령은 기본적으로 URL만 출력합니다. agent가 같은 URL을 브라우저에서 열 수 있도록 자동 브라우저 실행은 기본값이 아닙니다.
 
 wireframe 리뷰 화면 열기:
 
@@ -33,10 +35,10 @@ node scripts/open-visual-review.mjs templates/visual-review/wireframe.html
 node scripts/open-visual-review.mjs ./ui-review/mockup.html --actual http://localhost:3000
 ```
 
-브라우저 자동 열기 없이 서버만 실행:
+터미널에서 직접 브라우저까지 열고 싶을 때:
 
 ```bash
-node scripts/open-visual-review.mjs ./ui-review/mockup.html --no-open
+node scripts/open-visual-review.mjs ./ui-review/mockup.html --open
 ```
 
 ## Target

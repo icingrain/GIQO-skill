@@ -11,14 +11,14 @@ function printHelp() {
   console.log(`GIQO Visual Review launcher
 
 Usage:
-  node scripts/open-visual-review.mjs [html-file] [--port 8765] [--host 127.0.0.1] [--actual URL] [--no-open]
+  node scripts/open-visual-review.mjs [html-file] [--port 8765] [--host 127.0.0.1] [--actual URL] [--open]
 
 Examples:
   node scripts/open-visual-review.mjs
   node scripts/open-visual-review.mjs templates/visual-review/wireframe.html
   node scripts/open-visual-review.mjs ./ui-review/mockup.html --port 9000
   node scripts/open-visual-review.mjs ./ui-review/mockup.html --actual http://localhost:3000
-  node scripts/open-visual-review.mjs --no-open
+  node scripts/open-visual-review.mjs --open
 `);
 }
 
@@ -28,7 +28,7 @@ function parseArgs(argv) {
     host: "127.0.0.1",
     port: 8765,
     actual: "",
-    openBrowser: true,
+    openBrowser: false,
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -36,6 +36,10 @@ function parseArgs(argv) {
     if (arg === "--help" || arg === "-h") {
       printHelp();
       process.exit(0);
+    }
+    if (arg === "--open") {
+      options.openBrowser = true;
+      continue;
     }
     if (arg === "--no-open") {
       options.openBrowser = false;
