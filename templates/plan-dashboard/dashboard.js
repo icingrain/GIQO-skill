@@ -1,5 +1,15 @@
 const STATUSES = ["applied", "running", "saved", "stashed", "failed", "cancelled"];
 const OPEN = new Set(["saved", "running", "failed", "stashed"]);
+const STATUS_ALIASES = new Map([
+  ["in_progress", "running"],
+  ["in-progress", "running"],
+  ["progress", "running"],
+  ["진행중", "running"],
+  ["진행 중", "running"],
+  ["done", "applied"],
+  ["complete", "applied"],
+  ["completed", "applied"],
+]);
 
 const sampleState = { plans: [{ plan: { id: "plan-ui-components", title: "UI componentization test plan", summary: "Plan for splitting the current board UI into reusable components while preserving behavior.", updatedAt: "2026-07-23T00:00:00.000Z" }, taskState: { phases: [
   { id: "phase-boundary", title: "UI boundary survey", summary: "Identify sections, state flow, and style groups before moving markup.", order: 0 },
@@ -20,7 +30,7 @@ void loadDashboard({ fresh: false });
 async function loadDashboard({ fresh }) {
   setText("#gqo-status", "Loading dashboard state…");
   const state = fresh ? await readFreshState() : readEmbeddedState();
-  stateRef.plans = Array.isArray(state.plans) ? state.plans : [];
+  stateRef.plans = normalizePlans(Array.isArray(state.plans) ? state.plans : []);
   stateRef.activePlan = Math.min(stateRef.activePlan, Math.max(stateRef.plans.length - 1, 0));
   setDefaultSelection();
   render();
@@ -97,8 +107,11 @@ function renderPhases() {
   container.replaceChildren(...currentPhases().map((phase, index) => {
     const phaseTasks = tasks.filter((task) => task.phaseId === phase.id);
     const applied = countStatus(phaseTasks, "applied");
+    const running = countStatus(phaseTasks, "running");
+    const phaseStatus = planStatusOf(phaseTasks);
     const card = el("article", `phase-card${phase.id === stateRef.activePhase ? " is-active" : ""}`);
-    card.append(row("phase-top", [el("span", "chevron", phase.id === stateRef.activePhase ? "⌄" : "›"), el("span", "phase-title", `${index + 1}. ${phase.title ?? phase.id}`), el("span", "phase-rate", `${applied} / ${phaseTasks.length} applied`)]), el("p", "phase-summary", phase.summary ?? "No phase summary recorded."), progress(percentOf(applied, phaseTasks.length), "bar"));
+    card.dataset.status = phaseStatus;
+    card.append(row("phase-top", [el("span", "chevron", phase.id === stateRef.activePhase ? "⌄" : "›"), el("span", "phase-title", `${index + 1}. ${phase.title ?? phase.id}`), el("span", "phase-rate", phaseRate(applied, running, phaseTasks.length))]), el("p", "phase-summary", phase.summary ?? "No phase summary recorded."), progress(percentOf(applied, phaseTasks.length), "bar", phaseStatus));
     if (phase.id === stateRef.activePhase) card.append(renderMiniTasks(phaseTasks));
     card.addEventListener("click", () => { const isOpen = stateRef.activePhase === phase.id; stateRef.activePhase = isOpen ? "" : phase.id; stateRef.activeTask = isOpen ? "" : phaseTasks[0]?.id ?? ""; render(); });
     return card;
@@ -107,7 +120,7 @@ function renderPhases() {
 
 function renderMiniTasks(tasks) {
   const wrap = el("div", "phase-preview");
-  wrap.append(...tasks.slice(0, 3).map((task) => row("mini-task", [statusDot(task.status), el("strong", "", task.title ?? task.id), statusPill(task.status)])));
+  wrap.append(...tasks.map((task) => row("mini-task", [statusDot(task.status), el("strong", "", task.title ?? task.id), statusPill(task.status)])));
   return wrap;
 }
 
@@ -144,6 +157,21 @@ function currentPhases() { return [...(currentPlan().taskState?.phases ?? [])].s
 function currentTasks() { return currentPlan().taskState?.tasks ?? []; }
 function currentPhase() { return currentPhases().find((phase) => phase.id === stateRef.activePhase); }
 function countStatus(tasks, status) { return tasks.filter((task) => task.status === status).length; }
+function normalizePlans(plans) {
+  return plans.map((entry) => ({
+    ...entry,
+    taskState: {
+      ...(entry.taskState ?? {}),
+      phases: Array.isArray(entry.taskState?.phases) ? entry.taskState.phases : [],
+      tasks: Array.isArray(entry.taskState?.tasks) ? entry.taskState.tasks.map(normalizeTask) : [],
+    },
+  }));
+}
+function normalizeTask(task) { return { ...task, status: statusOf(task.status) }; }
+function statusOf(value = "saved") {
+  const key = String(value).trim().toLowerCase();
+  return STATUSES.includes(key) ? key : STATUS_ALIASES.get(key) ?? "saved";
+}
 function planStatusOf(tasks) {
   if (tasks.length === 0) return "not-started";
   if (tasks.some((task) => task.status === "failed" || task.status === "stashed")) return "blocked";
@@ -152,6 +180,7 @@ function planStatusOf(tasks) {
   return "not-started";
 }
 function percentOf(value, total) { return total > 0 ? Math.round((value / total) * 100) : 0; }
+function phaseRate(applied, running, total) { return running > 0 ? `${applied} / ${total} applied · running ${running}` : `${applied} / ${total} applied`; }
 function updatedLabel(value) { return value ? "Updated recently" : "Updated unknown"; }
 function setText(selector, value) { const node = $(selector); if (node) node.textContent = value; }
 function progress(percent, className, status = "") { const node = el("div", className); if (status) node.dataset.status = status; const bar = el("i"); bar.style.width = `${percent}%`; node.append(bar); return node; }
