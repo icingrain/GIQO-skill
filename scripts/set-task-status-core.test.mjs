@@ -81,3 +81,29 @@ test("Given missing task When setting status Then a typed error is thrown", asyn
     (error) => error instanceof TaskStatusError && /Task not found/.test(error.message),
   );
 });
+
+test("Given tasks in multiple phases When setting one task status Then only the matching task changes", async () => {
+  const root = await mkdtemp(join(tmpdir(), "giqo-task-status-"));
+  await upsertPlanState({
+    root,
+    planId: "plan-status",
+    input: {
+      plan: { title: "Anchored Status Plan" },
+      phases: [
+        { id: "design", title: "Design" },
+        { id: "apply", title: "Apply" },
+      ],
+      tasks: [
+        { id: "same-title-design", phaseId: "design", title: "Repeated title", status: "saved" },
+        { id: "same-title-apply", phaseId: "apply", title: "Repeated title", status: "saved" },
+      ],
+    },
+  });
+
+  await setTaskStatus({ root, planId: "plan-status", taskId: "same-title-apply", status: "running" });
+
+  const tasksPath = join(root, ".giqo", "plans", "plan-status", "tasks.json");
+  const tasks = JSON.parse(await readFile(tasksPath, "utf8"));
+  assert.equal(tasks.tasks.find((task) => task.id === "task-same-title-design").status, "saved");
+  assert.equal(tasks.tasks.find((task) => task.id === "task-same-title-apply").status, "running");
+});

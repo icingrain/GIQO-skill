@@ -109,8 +109,8 @@ function parseTask(task, phaseIds, now) {
   if (!phaseIds.has(phaseId)) {
     throw new PlanStateError(`Task ${task.id} references missing phase ${phaseId}.`);
   }
-  const status = optionalString(task.status) ?? "saved";
-  if (!TASK_STATUSES.has(status)) {
+  const status = optionalString(task.status);
+  if (status !== undefined && !TASK_STATUSES.has(status)) {
     throw new PlanStateError(`Task ${task.id} has invalid status ${status}.`);
   }
   return {
@@ -152,6 +152,7 @@ function upsertTasks(currentTasks, incomingTasks) {
     byId.set(task.id, {
       ...currentTask,
       ...task,
+      status: task.status ?? currentTask?.status ?? "saved",
       evidence: hasEvidence(task.evidence) ? task.evidence : currentTask?.evidence ?? task.evidence,
       createdAt: currentTask?.createdAt ?? task.createdAt,
     });
