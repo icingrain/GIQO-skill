@@ -242,9 +242,10 @@ function main() {
   if (!existsSync(filePath) || !statSync(filePath).isFile()) {
     throw new Error(`Review shell file not found: ${filePath}`);
   }
-  const root = resolve(filePath, "..");
+  const dashboardServe = dashboardServeTarget(filePath);
+  const root = dashboardServe.root;
   const dir = stateDir(reviewFilePath);
-  const fileName = filePath.split(sep).pop();
+  const fileName = dashboardServe.fileName;
   const query = new URLSearchParams();
   if (actualUrl) {
     query.set("actual", actualUrl.href);
@@ -265,6 +266,15 @@ function main() {
     console.error(error.message);
     process.exit(1);
   });
+}
+
+function dashboardServeTarget(filePath) {
+  const parent = resolve(filePath, "..");
+  const grandparent = resolve(parent, "..");
+  if (filePath.endsWith(`${sep}.giqo${sep}plans${sep}dashboard${sep}dashboard.html`) || (parent.endsWith(`${sep}dashboard`) && grandparent.endsWith(`${sep}plans`))) {
+    return { root: grandparent, fileName: `dashboard${sep}${filePath.split(sep).pop()}` };
+  }
+  return { root: parent, fileName: filePath.split(sep).pop() };
 }
 
 try {

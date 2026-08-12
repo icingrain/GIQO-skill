@@ -188,10 +188,12 @@ Visual Review는 UI 작업 중 실제 화면이나 생성된 목업에서 컴포
 화면에서 보이는 핵심 컨트롤:
 
 - `Status`: 저장된 요청을 `saved`, `running`, `applied`, `failed`로 필터링합니다.
-- `Target`: 수정 요청을 붙일 UI 대상입니다.
+- `Target`: 수정 요청을 붙일 UI 대상입니다. 버튼을 누르면 checkbox 목록이 열리고, 여러 target을 선택해 하나의 코멘트를 남길 수 있습니다.
 - `Refresh`: agent가 갱신한 저장 상태를 다시 불러옵니다.
 - `Hide feedback` / `Show feedback`: 저장된 요청 패널을 접거나 펼칩니다.
 - 저장된 요청 카드의 `Edit` / `Delete`: 이미 저장한 요청을 수정하거나 삭제합니다.
+
+Toolbar에는 status별 저장 요청 수가 표시되고, 화면의 pin 숫자는 현재 `Status` 필터에 맞는 요청 수만 보여줍니다. Target 이름은 `aria-label`, heading, visible text, DOM role을 바탕으로 가볍게 추론합니다. 실제 앱 live review에서는 `Review clicks` / `Interact with app` 전환으로 target 선택과 앱 내부 클릭 조작을 바꿀 수 있습니다.
 
 브라우저는 소스 코드를 직접 바꾸지 않습니다. 저장된 요청을 실제로 반영하려면 다시 agent에게 요청합니다.
 
@@ -204,6 +206,7 @@ Visual Review는 UI 작업 중 실제 화면이나 생성된 목업에서 컴포
 | 용어 | 의미 |
 |---|---|
 | Target | 수정 요청이 붙는 안정적인 UI ID. 예: `home.hero.primary-cta` |
+| `targetIds` | 하나의 요청에 함께 묶인 여러 Target ID |
 | `saved` | 저장됨, 아직 처리 전 |
 | `running` | agent가 처리 중 |
 | `applied` | 문서, 아티팩트, 또는 소스에 반영됨 |

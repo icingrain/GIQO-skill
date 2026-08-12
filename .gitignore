@@ -1,6 +1,7 @@
 .DS_Store
 .codegraph/
 .omo/
+.giqo/
 .opencode/
 .playwright-mcp/
 node_modules/
@@ -8,4 +9,5 @@ dist/
 coverage/
 test-results/
 local-guides/
+source/
 *.log
