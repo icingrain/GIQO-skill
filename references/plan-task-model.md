@@ -157,7 +157,9 @@ node scripts/generate-plan-dashboard.mjs --plan-id <plan-id>
 For a cross-plan view, use:
 
 ```bash
-node scripts/generate-plan-dashboard.mjs --all --output-dir .giqo/plans/dashboard
+node scripts/generate-plan-dashboard.mjs --all
 ```
+
+Cross-plan dashboards are written to `.giqo/plans/dashboard/` by default. Individual Plan dashboards remain under `.giqo/plans/<plan-id>/`. When a Plan is added, regenerate the cross-plan dashboard with `--all`; the new Plan appears in the sidebar instead of creating a plan-named dashboard fork.
 
 The generator embeds the current Plan/Task state into `dashboard.html` and copies `dashboard.css` plus `dashboard.js` beside it. It is a read-only artifact generator; it must not change `plan.json` or `tasks.json`.

@@ -38,13 +38,18 @@ test("Given all-plans mode When generating dashboard Then each plan becomes one 
   const root = await mkdtemp(join(tmpdir(), "giqo-dashboard-"));
   await writePlan(root, "plan-a", "Plan A");
   await writePlan(root, "plan-b", "Plan B");
+  await mkdir(join(root, ".giqo", "plans", "dashboard"), { recursive: true });
 
   const result = await generatePlanDashboard({ root, allPlans: true });
+  const repeated = await generatePlanDashboard({ root, allPlans: true });
 
   const html = await readFile(result.dashboardPath, "utf8");
   assert.match(html, /Plan A/);
   assert.match(html, /Plan B/);
+  assert.doesNotMatch(html, /Untitled Plan/);
   assert.equal(result.planCount, 2);
+  assert.equal(result.outputDir, join(root, ".giqo", "plans", "dashboard"));
+  assert.equal(repeated.outputDir, result.outputDir);
 });
 
 async function writePlan(root, planId, title) {

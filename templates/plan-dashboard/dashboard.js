@@ -45,13 +45,31 @@ function readEmbeddedState() {
 
 async function readFreshState() {
   try {
+    const embedded = readEmbeddedState();
+    const embeddedPlans = Array.isArray(embedded.plans) ? embedded.plans : [];
+    if (embeddedPlans.length > 1) return readFreshPlans(embeddedPlans);
     const [planResponse, tasksResponse] = await Promise.all([fetch("plan.json", { cache: "no-store" }), fetch("tasks.json", { cache: "no-store" })]);
-    if (!planResponse.ok || !tasksResponse.ok) return readEmbeddedState();
+    if (!planResponse.ok || !tasksResponse.ok) return embedded;
     const [plan, taskState] = await Promise.all([planResponse.json(), tasksResponse.json()]);
     return { plans: [{ plan, taskState }] };
   } catch {
     return readEmbeddedState();
   }
+}
+
+async function readFreshPlans(embeddedPlans) {
+  const plans = await Promise.all(embeddedPlans.map(async (entry) => {
+    const planId = entry.plan?.id;
+    if (!planId) return entry;
+    const [planResponse, tasksResponse] = await Promise.all([
+      fetch(`../${encodeURIComponent(planId)}/plan.json`, { cache: "no-store" }),
+      fetch(`../${encodeURIComponent(planId)}/tasks.json`, { cache: "no-store" }),
+    ]);
+    if (!planResponse.ok || !tasksResponse.ok) return entry;
+    const [plan, taskState] = await Promise.all([planResponse.json(), tasksResponse.json()]);
+    return { plan, taskState };
+  }));
+  return { plans };
 }
 
 function setDefaultSelection() {

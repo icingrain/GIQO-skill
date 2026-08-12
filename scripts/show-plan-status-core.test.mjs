@@ -74,3 +74,18 @@ test("Given saved tasks only When rendering compact Then health is not-started",
 
   assert.match(output, /Health: not-started/);
 });
+
+test("Given running status aliases When rendering standard Then aliases count as running", () => {
+  const output = renderPlanStatus({
+    plan: { title: "진행 상태 Plan" },
+    taskState: {
+      phases: [{ id: "phase", title: "Phase", order: 0 }],
+      tasks: [
+        { id: "one", phaseId: "phase", title: "영문 진행", status: "in_progress" },
+        { id: "two", phaseId: "phase", title: "한글 진행", status: "진행중" },
+      ],
+    },
+  }, { format: "standard" });
+
+  assert.match(output, /0 \/ 2 applied · running 2 · saved 0/);
+});

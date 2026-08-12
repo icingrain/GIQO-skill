@@ -59,9 +59,13 @@ async function resolvePlanIds(root, options) {
       throw new PlanDashboardError("No .giqo/plans directory found.");
     }
     const entries = await readdir(plansDir, { withFileTypes: true });
-    return entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
+    return entries.filter((entry) => isPlanDirectory(plansDir, entry)).map((entry) => entry.name).sort();
   }
   throw new PlanDashboardError("Provide --plan-id or --all.");
+}
+
+function isPlanDirectory(plansDir, entry) {
+  return entry.isDirectory() && existsSync(join(plansDir, entry.name, "plan.json")) && existsSync(join(plansDir, entry.name, "tasks.json"));
 }
 
 function resolveOutputDir(root, options, plans) {
@@ -71,8 +75,7 @@ function resolveOutputDir(root, options, plans) {
   if (options.planId) {
     return join(root, ".giqo", "plans", options.planId);
   }
-  const firstPlanId = plans[0]?.plan?.id;
-  return join(root, ".giqo", "plans", firstPlanId ? `${firstPlanId}-dashboard` : "dashboard");
+  return join(root, ".giqo", "plans", "dashboard");
 }
 
 async function renderDashboardHtml(state) {

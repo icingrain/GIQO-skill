@@ -10,6 +10,16 @@ export class PlanStatusError extends Error {
 }
 
 const STATUSES = ["applied", "running", "saved", "stashed", "failed", "cancelled"];
+const STATUS_ALIASES = new Map([
+  ["in_progress", "running"],
+  ["in-progress", "running"],
+  ["progress", "running"],
+  ["진행중", "running"],
+  ["진행 중", "running"],
+  ["done", "applied"],
+  ["complete", "applied"],
+  ["completed", "applied"],
+]);
 const ICONS = { applied: "✓", running: "▶", saved: "○", stashed: "◇", failed: "!", cancelled: "×" };
 const ANSI = {
   reset: "\u001b[0m",
@@ -41,10 +51,14 @@ async function resolvePlanId(root, requested) {
   if (requested) return requested;
   const plansDir = join(root, ".giqo", "plans");
   if (!existsSync(plansDir)) throw new PlanStatusError("No .giqo/plans directory found.");
-  const planIds = (await readdir(plansDir, { withFileTypes: true })).filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
+  const planIds = (await readdir(plansDir, { withFileTypes: true })).filter((entry) => isPlanDirectory(plansDir, entry)).map((entry) => entry.name).sort();
   if (planIds.length === 0) throw new PlanStatusError("No plans found under .giqo/plans.");
   if (planIds.length > 1) throw new PlanStatusError(`Multiple plans found. Pass --plan-id. Available: ${planIds.join(", ")}`);
   return planIds[0];
+}
+
+function isPlanDirectory(plansDir, entry) {
+  return entry.isDirectory() && existsSync(join(plansDir, entry.name, "plan.json")) && existsSync(join(plansDir, entry.name, "tasks.json"));
 }
 
 async function readJson(path) {
@@ -106,8 +120,17 @@ function normalize(entry) {
   return {
     plan: { title: plan.title ?? plan.id ?? "Untitled Plan" },
     phases: [...(taskState.phases ?? [])].sort((left, right) => (left.order ?? 0) - (right.order ?? 0)),
-    tasks: taskState.tasks ?? [],
+    tasks: Array.isArray(taskState.tasks) ? taskState.tasks.map(normalizeTask) : [],
   };
+}
+
+function normalizeTask(task) {
+  return { ...task, status: statusOf(task.status) };
+}
+
+function statusOf(value = "saved") {
+  const key = String(value).trim().toLowerCase();
+  return STATUSES.includes(key) ? key : STATUS_ALIASES.get(key) ?? "saved";
 }
 
 function health(tasks) {
