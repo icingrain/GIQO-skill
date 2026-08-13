@@ -19,9 +19,11 @@
   function targetElement(id) { return id === "global" ? document.body : document.querySelector(`[data-gqo-id="${CSS.escape(id)}"]`); }
   function visible(element) { const rect = element.getBoundingClientRect(); const style = getComputedStyle(element); return rect.width > 0 && rect.height > 0 && rect.bottom >= 0 && rect.right >= 0 && rect.top <= innerHeight && rect.left <= innerWidth && style.visibility !== "hidden" && style.display !== "none"; }
   function targetText(element) { const clone = element?.cloneNode(true); clone?.querySelectorAll?.(".gqo-comment-pin").forEach((pin) => pin.remove()); return (clone?.textContent || "").trim().replace(/\s+/g, " ").slice(0, 160); }
+  function readableId(id) { const last = String(id || "").split(/[.#]/).filter(Boolean).pop() || id; return String(last || "Target").replace(/[-_]+/g, " ").replace(/\b\w/g, (char) => char.toUpperCase()); }
+  function conciseText(element) { const text = targetText(element); return text.length >= 2 && text.length <= 24 && !/[.!?。]\s/.test(text) ? text : ""; }
   function inferName(element, id) {
     if (!element || id === "global") return "Global";
-    const explicit = element.getAttribute("aria-label") || element.getAttribute("title") || element.querySelector("h1,h2,h3,legend")?.textContent || targetText(element);
+    const explicit = element.getAttribute("aria-label") || element.getAttribute("title") || conciseText(element) || readableId(id);
     const role = element.getAttribute("role") || element.tagName.toLowerCase();
     return `${String(explicit || id).trim().replace(/\s+/g, " ").slice(0, 64)} · ${role}`;
   }
