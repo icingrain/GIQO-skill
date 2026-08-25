@@ -52,6 +52,33 @@ test("Given all-plans mode When generating dashboard Then each plan becomes one 
   assert.equal(repeated.outputDir, result.outputDir);
 });
 
+test("Given an existing all-plans dashboard When generating for a new plan Then the canonical dashboard is updated", async () => {
+  const root = await mkdtemp(join(tmpdir(), "giqo-dashboard-"));
+  await writePlan(root, "plan-a", "Plan A");
+  const first = await generatePlanDashboard({ root, allPlans: true });
+  await writePlan(root, "plan-b", "Plan B");
+
+  const result = await generatePlanDashboard({ root, planId: "plan-b" });
+
+  const html = await readFile(result.dashboardPath, "utf8");
+  assert.equal(result.outputDir, first.outputDir);
+  assert.match(html, /Plan A/);
+  assert.match(html, /Plan B/);
+  assert.equal(result.planCount, 2);
+});
+
+test("Given an all-plans dashboard When refreshing without reloading html Then fresh state lists newly added plans", async () => {
+  const root = await mkdtemp(join(tmpdir(), "giqo-dashboard-"));
+  await writePlan(root, "plan-a", "Plan A");
+  const first = await generatePlanDashboard({ root, allPlans: true });
+  await writePlan(root, "plan-b", "Plan B");
+
+  await generatePlanDashboard({ root, allPlans: true });
+
+  const state = JSON.parse(await readFile(join(first.outputDir, "dashboard-state.json"), "utf8"));
+  assert.deepEqual(state.plans.map((entry) => entry.plan.id), ["plan-a", "plan-b"]);
+});
+
 async function writePlan(root, planId, title) {
   const planDir = join(root, ".giqo", "plans", planId);
   await mkdir(planDir, { recursive: true });

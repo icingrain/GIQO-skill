@@ -29,9 +29,10 @@ void loadDashboard({ fresh: false });
 
 async function loadDashboard({ fresh }) {
   setText("#gqo-status", "Loading dashboard state…");
+  const activePlanId = currentPlanId();
   const state = fresh ? await readFreshState() : readEmbeddedState();
   stateRef.plans = normalizePlans(Array.isArray(state.plans) ? state.plans : []);
-  stateRef.activePlan = Math.min(stateRef.activePlan, Math.max(stateRef.plans.length - 1, 0));
+  selectActivePlan(activePlanId);
   setDefaultSelection();
   render();
   setText("#gqo-status", "Updated just now");
@@ -45,6 +46,8 @@ function readEmbeddedState() {
 
 async function readFreshState() {
   try {
+    const stateResponse = await fetch("dashboard-state.json", { cache: "no-store" });
+    if (stateResponse.ok) return stateResponse.json();
     const embedded = readEmbeddedState();
     const embeddedPlans = Array.isArray(embedded.plans) ? embedded.plans : [];
     if (embeddedPlans.length > 1) return readFreshPlans(embeddedPlans);
@@ -55,6 +58,17 @@ async function readFreshState() {
   } catch {
     return readEmbeddedState();
   }
+}
+
+function selectActivePlan(planId) {
+  const index = planId ? stateRef.plans.findIndex((entry) => entry.plan?.id === planId) : -1;
+  if (index >= 0) {
+    stateRef.activePlan = index;
+    return;
+  }
+  stateRef.activePlan = Math.min(stateRef.activePlan, Math.max(stateRef.plans.length - 1, 0));
+  stateRef.activePhase = "";
+  stateRef.activeTask = "";
 }
 
 async function readFreshPlans(embeddedPlans) {
@@ -171,6 +185,7 @@ function detailLine(title, values = []) {
 }
 
 function currentPlan() { return stateRef.plans[stateRef.activePlan] ?? {}; }
+function currentPlanId() { return currentPlan().plan?.id ?? ""; }
 function currentPhases() { return [...(currentPlan().taskState?.phases ?? [])].sort((a, b) => (a.order ?? 0) - (b.order ?? 0)); }
 function currentTasks() { return currentPlan().taskState?.tasks ?? []; }
 function currentPhase() { return currentPhases().find((phase) => phase.id === stateRef.activePhase); }

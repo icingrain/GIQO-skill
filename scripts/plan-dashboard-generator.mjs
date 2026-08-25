@@ -14,15 +14,19 @@ export class PlanDashboardError extends Error {
 
 export async function generatePlanDashboard(options) {
   const root = resolve(options.root);
-  const plans = await readPlans(root, options);
-  const outputDir = resolveOutputDir(root, options, plans);
+  const dashboardOptions = effectiveDashboardOptions(root, options);
+  const plans = await readPlans(root, dashboardOptions);
+  const outputDir = resolveOutputDir(root, dashboardOptions);
   const dashboardPath = join(outputDir, "dashboard.html");
+  const statePath = join(outputDir, "dashboard-state.json");
   const state = { plans };
   const html = await renderDashboardHtml(state);
+  const stateJson = `${JSON.stringify(state, null, 2)}\n`;
 
   await mkdir(outputDir, { recursive: true });
   await Promise.all([
     writeFile(dashboardPath, html, "utf8"),
+    writeFile(statePath, stateJson, "utf8"),
     copyFile(join(TEMPLATE_DIR, "dashboard.css"), join(outputDir, "dashboard.css")),
     copyFile(join(TEMPLATE_DIR, "dashboard.js"), join(outputDir, "dashboard.js")),
   ]);
@@ -34,6 +38,14 @@ export async function generatePlanDashboard(options) {
     phaseCount: plans.reduce((count, entry) => count + entry.taskState.phases.length, 0),
     taskCount: plans.reduce((count, entry) => count + entry.taskState.tasks.length, 0),
   };
+}
+
+function effectiveDashboardOptions(root, options) {
+  if (!options.planId || options.allPlans || options.outputDir) {
+    return options;
+  }
+  const dashboardPath = join(root, ".giqo", "plans", "dashboard", "dashboard.html");
+  return existsSync(dashboardPath) ? { ...options, planId: undefined, allPlans: true } : options;
 }
 
 async function readPlans(root, options) {
@@ -68,7 +80,7 @@ function isPlanDirectory(plansDir, entry) {
   return entry.isDirectory() && existsSync(join(plansDir, entry.name, "plan.json")) && existsSync(join(plansDir, entry.name, "tasks.json"));
 }
 
-function resolveOutputDir(root, options, plans) {
+function resolveOutputDir(root, options) {
   if (options.outputDir) {
     return resolve(options.outputDir);
   }
