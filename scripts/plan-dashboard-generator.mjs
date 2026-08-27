@@ -18,15 +18,12 @@ export async function generatePlanDashboard(options) {
   const plans = await readPlans(root, dashboardOptions);
   const outputDir = resolveOutputDir(root, dashboardOptions);
   const dashboardPath = join(outputDir, "dashboard.html");
-  const statePath = join(outputDir, "dashboard-state.json");
   const state = { plans };
   const html = await renderDashboardHtml(state);
-  const stateJson = `${JSON.stringify(state, null, 2)}\n`;
 
   await mkdir(outputDir, { recursive: true });
   await Promise.all([
     writeFile(dashboardPath, html, "utf8"),
-    writeFile(statePath, stateJson, "utf8"),
     copyFile(join(TEMPLATE_DIR, "dashboard.css"), join(outputDir, "dashboard.css")),
     copyFile(join(TEMPLATE_DIR, "dashboard.js"), join(outputDir, "dashboard.js")),
   ]);

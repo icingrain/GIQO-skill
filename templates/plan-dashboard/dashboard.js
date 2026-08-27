@@ -24,15 +24,13 @@ const sampleState = { plans: [{ plan: { id: "plan-ui-components", title: "UI com
 const stateRef = { plans: [], activePlan: 0, activePhase: "", activeTask: "" };
 const $ = (selector) => document.querySelector(selector);
 
-$("#gqo-refresh")?.addEventListener("click", () => loadDashboard({ fresh: true }));
-void loadDashboard({ fresh: false });
+$("#gqo-refresh")?.addEventListener("click", () => location.reload());
+loadDashboard();
 
-async function loadDashboard({ fresh }) {
+function loadDashboard() {
   setText("#gqo-status", "Loading dashboard state…");
-  const activePlanId = currentPlanId();
-  const state = fresh ? await readFreshState() : readEmbeddedState();
+  const state = readEmbeddedState();
   stateRef.plans = normalizePlans(Array.isArray(state.plans) ? state.plans : []);
-  selectActivePlan(activePlanId);
   setDefaultSelection();
   render();
   setText("#gqo-status", "Updated just now");
@@ -42,48 +40,6 @@ function readEmbeddedState() {
   const embedded = document.querySelector('script[type="application/json"][data-gqo-dashboard-state]');
   if (!embedded?.textContent?.trim()) return sampleState;
   try { return JSON.parse(embedded.textContent); } catch { return sampleState; }
-}
-
-async function readFreshState() {
-  try {
-    const stateResponse = await fetch("dashboard-state.json", { cache: "no-store" });
-    if (stateResponse.ok) return stateResponse.json();
-    const embedded = readEmbeddedState();
-    const embeddedPlans = Array.isArray(embedded.plans) ? embedded.plans : [];
-    if (embeddedPlans.length > 1) return readFreshPlans(embeddedPlans);
-    const [planResponse, tasksResponse] = await Promise.all([fetch("plan.json", { cache: "no-store" }), fetch("tasks.json", { cache: "no-store" })]);
-    if (!planResponse.ok || !tasksResponse.ok) return embedded;
-    const [plan, taskState] = await Promise.all([planResponse.json(), tasksResponse.json()]);
-    return { plans: [{ plan, taskState }] };
-  } catch {
-    return readEmbeddedState();
-  }
-}
-
-function selectActivePlan(planId) {
-  const index = planId ? stateRef.plans.findIndex((entry) => entry.plan?.id === planId) : -1;
-  if (index >= 0) {
-    stateRef.activePlan = index;
-    return;
-  }
-  stateRef.activePlan = Math.min(stateRef.activePlan, Math.max(stateRef.plans.length - 1, 0));
-  stateRef.activePhase = "";
-  stateRef.activeTask = "";
-}
-
-async function readFreshPlans(embeddedPlans) {
-  const plans = await Promise.all(embeddedPlans.map(async (entry) => {
-    const planId = entry.plan?.id;
-    if (!planId) return entry;
-    const [planResponse, tasksResponse] = await Promise.all([
-      fetch(`../${encodeURIComponent(planId)}/plan.json`, { cache: "no-store" }),
-      fetch(`../${encodeURIComponent(planId)}/tasks.json`, { cache: "no-store" }),
-    ]);
-    if (!planResponse.ok || !tasksResponse.ok) return entry;
-    const [plan, taskState] = await Promise.all([planResponse.json(), tasksResponse.json()]);
-    return { plan, taskState };
-  }));
-  return { plans };
 }
 
 function setDefaultSelection() {

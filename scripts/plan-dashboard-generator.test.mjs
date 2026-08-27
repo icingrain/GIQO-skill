@@ -67,18 +67,6 @@ test("Given an existing all-plans dashboard When generating for a new plan Then 
   assert.equal(result.planCount, 2);
 });
 
-test("Given an all-plans dashboard When refreshing without reloading html Then fresh state lists newly added plans", async () => {
-  const root = await mkdtemp(join(tmpdir(), "giqo-dashboard-"));
-  await writePlan(root, "plan-a", "Plan A");
-  const first = await generatePlanDashboard({ root, allPlans: true });
-  await writePlan(root, "plan-b", "Plan B");
-
-  await generatePlanDashboard({ root, allPlans: true });
-
-  const state = JSON.parse(await readFile(join(first.outputDir, "dashboard-state.json"), "utf8"));
-  assert.deepEqual(state.plans.map((entry) => entry.plan.id), ["plan-a", "plan-b"]);
-});
-
 async function writePlan(root, planId, title) {
   const planDir = join(root, ".giqo", "plans", planId);
   await mkdir(planDir, { recursive: true });
