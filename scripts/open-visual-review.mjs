@@ -4,6 +4,8 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createServer } from "node:http";
 import { basename, extname, isAbsolute, join, normalize, resolve, sep } from "node:path";
 import { spawn } from "node:child_process";
+import { readPlanDashboardState } from "./plan-dashboard-state-core.mjs";
+import { contentType, dashboardServeTarget } from "./open-visual-review-paths.mjs";
 
 const defaultFile = "templates/visual-review/mockup.html";
 
@@ -73,17 +75,6 @@ function parseArgs(argv) {
     throw new Error("Port must be an integer between 1 and 65535.");
   }
   return options;
-}
-
-function contentType(pathname) {
-  const types = {
-    ".css": "text/css; charset=utf-8",
-    ".html": "text/html; charset=utf-8",
-    ".js": "text/javascript; charset=utf-8",
-    ".json": "application/json; charset=utf-8",
-    ".md": "text/markdown; charset=utf-8",
-  };
-  return types[extname(pathname)] || "application/octet-stream";
 }
 
 function openUrl(url) {
@@ -197,6 +188,12 @@ function serve(root, dir, actualUrl) {
       }).catch((error) => json(response, 500, { ok: false, error: String(error) }));
       return;
     }
+    if (url.pathname === "/__gqo/plan-dashboard-state" && request.method === "GET") {
+      readPlanDashboardState(root)
+        .then((body) => json(response, 200, body))
+        .catch((error) => json(response, 500, { ok: false, error: String(error) }));
+      return;
+    }
     if (url.pathname === "/__gqo/save" && request.method === "POST") {
       readBody(request)
         .then((body) => writeReviewState(dir, body))
@@ -266,15 +263,6 @@ function main() {
     console.error(error.message);
     process.exit(1);
   });
-}
-
-function dashboardServeTarget(filePath) {
-  const parent = resolve(filePath, "..");
-  const grandparent = resolve(parent, "..");
-  if (filePath.endsWith(`${sep}.giqo${sep}plans${sep}dashboard${sep}dashboard.html`) || (parent.endsWith(`${sep}dashboard`) && grandparent.endsWith(`${sep}plans`))) {
-    return { root: grandparent, fileName: `dashboard${sep}${filePath.split(sep).pop()}` };
-  }
-  return { root: parent, fileName: filePath.split(sep).pop() };
 }
 
 try {

@@ -1,5 +1,7 @@
 const STATUSES = ["applied", "running", "saved", "stashed", "failed", "cancelled"];
 const OPEN = new Set(["saved", "running", "failed", "stashed"]);
+const LIVE_STATE_URL = "/__gqo/plan-dashboard-state";
+const LIVE_REFRESH_MS = 2000;
 const STATUS_ALIASES = new Map([
   ["in_progress", "running"],
   ["in-progress", "running"],
@@ -23,16 +25,16 @@ const sampleState = { plans: [{ plan: { id: "plan-ui-components", title: "UI com
 
 const stateRef = { plans: [], activePlan: 0, activePhase: "", activeTask: "" };
 const $ = (selector) => document.querySelector(selector);
+let stateFingerprint = "";
 
 $("#gqo-refresh")?.addEventListener("click", () => location.reload());
 loadDashboard();
+startLiveUpdates();
 
 function loadDashboard() {
   setText("#gqo-status", "Loading dashboard state…");
   const state = readEmbeddedState();
-  stateRef.plans = normalizePlans(Array.isArray(state.plans) ? state.plans : []);
-  setDefaultSelection();
-  render();
+  applyDashboardState(state);
   setText("#gqo-status", "Updated just now");
 }
 
@@ -40,6 +42,44 @@ function readEmbeddedState() {
   const embedded = document.querySelector('script[type="application/json"][data-gqo-dashboard-state]');
   if (!embedded?.textContent?.trim()) return sampleState;
   try { return JSON.parse(embedded.textContent); } catch { return sampleState; }
+}
+
+function startLiveUpdates() {
+  if (!["http:", "https:"].includes(location.protocol)) return;
+  setInterval(refreshLiveState, LIVE_REFRESH_MS);
+}
+
+async function refreshLiveState() {
+  try {
+    const response = await fetch(`${LIVE_STATE_URL}?t=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) return;
+    applyDashboardState(await response.json());
+    setText("#gqo-status", "Updated just now");
+  } catch {
+    setText("#gqo-status", "Live updates unavailable");
+  }
+}
+
+function applyDashboardState(state) {
+  const fingerprint = JSON.stringify(state);
+  if (fingerprint === stateFingerprint) return;
+  const activePlanId = currentPlanId();
+  stateFingerprint = fingerprint;
+  stateRef.plans = normalizePlans(Array.isArray(state.plans) ? state.plans : []);
+  selectActivePlan(activePlanId);
+  setDefaultSelection();
+  render();
+}
+
+function selectActivePlan(planId) {
+  const index = planId ? stateRef.plans.findIndex((entry) => entry.plan?.id === planId) : -1;
+  if (index >= 0) {
+    stateRef.activePlan = index;
+    return;
+  }
+  stateRef.activePlan = Math.min(stateRef.activePlan, Math.max(stateRef.plans.length - 1, 0));
+  stateRef.activePhase = "";
+  stateRef.activeTask = "";
 }
 
 function setDefaultSelection() {
@@ -165,7 +205,7 @@ function planStatusOf(tasks) {
   if (tasks.length === 0) return "not-started";
   if (tasks.some((task) => task.status === "failed" || task.status === "stashed")) return "blocked";
   if (tasks.some((task) => task.status === "running")) return "running";
-  if (tasks.some((task) => task.status === "applied")) return "complete";
+  if (tasks.every((task) => task.status === "applied")) return "complete";
   return "not-started";
 }
 function percentOf(value, total) { return total > 0 ? Math.round((value / total) * 100) : 0; }
