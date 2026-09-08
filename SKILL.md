@@ -152,7 +152,7 @@ When docs or evidence change an existing Phase, inspect non-terminal tasks befor
 
 Status display is inline-first. If the user asks to see Plan progress without explicitly asking for a browser dashboard, show a compact or standard status summary in the current chat/terminal. Generate or open the Plan Dashboard only when the user asks for a dashboard, browser view, preview URL, or visual progress screen. When a GIQO workflow changes Plan/Task state and a current Plan id is known, append a short inline status footer to the completion report.
 
-During `/giqo-skill apply`, Task status must be written as the work proceeds: set the Task to `running` before changing docs, artifacts, or source; set it to `applied` with evidence after successful verification; set it to `failed` with notes when blocked. Use `scripts/set-task-status.mjs` for these single-task transitions so `tasks.json` updates immediately.
+During `/giqo-skill apply`, Task status must be written before work proceeds. If a GIQO Plan/Task is known, the first write is always `scripts/set-task-status.mjs --plan-id <plan-id> --task-id <task-id> --status running`; only after that succeeds may the agent change docs, artifacts, or source. Set it to `applied` with evidence after successful verification, or `failed` with notes when blocked. This JSON-first gate is what makes dashboard `running` updates reliable.
 
 ## Command set
 

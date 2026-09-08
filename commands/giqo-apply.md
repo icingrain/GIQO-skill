@@ -41,7 +41,7 @@ Apply approved GIQO outputs and task work to the project.
 1. Confirm the active run and target outputs.
 2. Compare generated outputs with existing files.
 3. Refuse source edits unless the apply boundary is satisfied.
-4. When applying a Task, run `scripts/set-task-status.mjs --plan-id <plan-id> --task-id <task-id> --status running` before modifying docs, artifacts, or source.
+4. When applying a Task, the first write must be `scripts/set-task-status.mjs --plan-id <plan-id> --task-id <task-id> --status running`; do not modify docs, artifacts, or source until that command succeeds.
 5. When applying a saved UI edit request, update its status to `running` in `.giqo/ui-review/<screen>/` before modifying docs, artifacts, or source.
 6. Write approved docs and review assets.
 7. For allowed source edits, make only the named changes.

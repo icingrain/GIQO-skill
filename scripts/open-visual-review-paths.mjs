@@ -14,8 +14,8 @@ export function contentType(pathname) {
 export function dashboardServeTarget(filePath) {
   const parent = resolve(filePath, "..");
   const grandparent = resolve(parent, "..");
-  if (filePath.endsWith(`${sep}.giqo${sep}plans${sep}dashboard${sep}dashboard.html`) || (parent.endsWith(`${sep}dashboard`) && grandparent.endsWith(`${sep}plans`))) {
-    return { root: grandparent, fileName: `dashboard${sep}${basename(filePath)}` };
+  if (grandparent.endsWith(`${sep}.giqo${sep}plans`)) {
+    return { root: grandparent, fileName: `${basename(parent)}${sep}${basename(filePath)}` };
   }
   return { root: parent, fileName: basename(filePath) };
 }

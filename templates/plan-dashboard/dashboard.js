@@ -28,11 +28,12 @@ const $ = (selector) => document.querySelector(selector);
 let stateFingerprint = "";
 
 $("#gqo-refresh")?.addEventListener("click", () => location.reload());
-loadDashboard();
+void loadDashboard();
 startLiveUpdates();
 
-function loadDashboard() {
+async function loadDashboard() {
   setText("#gqo-status", "Loading dashboard state…");
+  if (await refreshLiveState()) return;
   const state = readEmbeddedState();
   applyDashboardState(state);
   setText("#gqo-status", "Updated just now");
@@ -52,11 +53,13 @@ function startLiveUpdates() {
 async function refreshLiveState() {
   try {
     const response = await fetch(`${LIVE_STATE_URL}?t=${Date.now()}`, { cache: "no-store" });
-    if (!response.ok) return;
+    if (!response.ok) return false;
     applyDashboardState(await response.json());
     setText("#gqo-status", "Updated just now");
+    return true;
   } catch {
     setText("#gqo-status", "Live updates unavailable");
+    return false;
   }
 }
 

@@ -5,14 +5,19 @@ import { join } from "node:path";
 export async function readPlanDashboardState(plansRoot) {
   const entries = await readdir(plansRoot, { withFileTypes: true });
   const plans = [];
-  for (const entry of entries.filter((candidate) => isPlanDirectory(plansRoot, candidate)).sort((left, right) => left.name.localeCompare(right.name))) {
+  for (const entry of entries.filter((candidate) => isPlanDirectory(plansRoot, candidate))) {
     const planDir = join(plansRoot, entry.name);
     plans.push({
       plan: JSON.parse(await readFile(join(planDir, "plan.json"), "utf8")),
       taskState: JSON.parse(await readFile(join(planDir, "tasks.json"), "utf8")),
     });
   }
+  plans.sort((left, right) => updatedTime(right) - updatedTime(left) || String(left.plan?.id ?? "").localeCompare(String(right.plan?.id ?? "")));
   return { plans };
+}
+
+function updatedTime(entry) {
+  return Date.parse(entry.taskState?.updatedAt ?? entry.plan?.updatedAt ?? "") || 0;
 }
 
 function isPlanDirectory(plansRoot, entry) {

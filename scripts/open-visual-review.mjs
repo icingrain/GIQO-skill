@@ -247,7 +247,8 @@ function main() {
   if (actualUrl) {
     query.set("actual", actualUrl.href);
   }
-  const url = `http://${options.host}:${options.port}/${encodeURIComponent(fileName)}?${query.toString()}`;
+  const encodedFileName = fileName.split(sep).map(encodeURIComponent).join("/");
+  const url = `http://${options.host}:${options.port}/${encodedFileName}?${query.toString()}`;
   const server = serve(root, dir, actualUrl);
 
   server.listen(options.port, options.host, () => {

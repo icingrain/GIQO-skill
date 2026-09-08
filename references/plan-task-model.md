@@ -134,7 +134,7 @@ node scripts/set-task-status.mjs --plan-id <plan-id> --task-id <task-id> --statu
 node scripts/set-task-status.mjs --plan-id <plan-id> --task-id <task-id> --status failed --note "Blocked by missing input"
 ```
 
-Agents should use this helper during `/giqo-skill apply`: mark the task `running` before work starts, then mark it `applied` or `failed` with evidence when the attempt ends. This is the step that makes `tasks.json` change immediately; dashboards and inline status only re-read that state.
+Agents must use this helper during `/giqo-skill apply`: mark the task `running` before work starts, then mark it `applied` or `failed` with evidence when the attempt ends. If a GIQO Plan/Task is known, no docs, review assets, or source edits may happen before the `running` write succeeds. This is the step that makes `tasks.json` change immediately; dashboards and inline status only re-read that state.
 
 Saved Visual Review requests can be promoted into tasks with:
 
@@ -146,7 +146,7 @@ The linker writes request ids into Task `sourceReviewRequests` and writes `linke
 
 ## Dashboard policy
 
-The Plan Dashboard is read-only. It renders `.giqo/plans/<plan-id>/plan.json` and `tasks.json` so users can see progress across Plans, Phases, and Tasks. Users must not edit task state directly in the dashboard.
+The Plan Dashboard is read-only. When served with `scripts/open-visual-review.mjs`, it reads `.giqo/plans/*/plan.json` and `tasks.json` through the live dashboard endpoint so users can see progress across all Plans, Phases, and Tasks. Users must not edit task state directly in the dashboard.
 
 Generate a dashboard with:
 
@@ -160,6 +160,6 @@ For a cross-plan view, use:
 node scripts/generate-plan-dashboard.mjs --all
 ```
 
-Cross-plan dashboards are written to `.giqo/plans/dashboard/` by default. Individual Plan dashboards remain under `.giqo/plans/<plan-id>/`. When a Plan is added, regenerate the cross-plan dashboard with `--all`; the new Plan appears in the sidebar instead of creating a plan-named dashboard fork.
+Cross-plan dashboards are written to `.giqo/plans/dashboard/` by default. Individual Plan dashboards remain under `.giqo/plans/<plan-id>/`, but launching any Plan dashboard through `scripts/open-visual-review.mjs` must serve from `.giqo/plans/` and use the live endpoint, not a single-plan endpoint. The latest updated Plan appears first in the sidebar.
 
 The generator embeds the current Plan/Task state into `dashboard.html` and copies `dashboard.css` plus `dashboard.js` beside it. It is a read-only artifact generator; it must not change `plan.json` or `tasks.json`.
