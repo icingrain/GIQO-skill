@@ -173,6 +173,25 @@ body[data-gqo-live="true"] .gqo-panel {
   cursor: pointer;
 }
 
+.gqo-toolbar .gqo-icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  padding: 0;
+}
+
+.gqo-icon-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 #gqo-counts {
   color: var(--gqo-muted);
   font-size: 0.78rem;
@@ -630,6 +649,33 @@ body[data-gqo-feedback-collapsed="true"] #gqo-comments {
   .gqo-toolbar-title {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .gqo-toolbar,
+  .gqo-toolbar-controls,
+  .gqo-target-picker-label,
+  .gqo-toolbar-actions {
+    box-sizing: border-box;
+    max-width: 100%;
+  }
+
+  .gqo-toolbar-controls,
+  .gqo-toolbar-actions {
+    justify-content: flex-start;
+  }
+
+  .gqo-toolbar-actions {
+    flex-wrap: wrap;
+    margin-left: 0;
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  #gqo-target-button {
+    max-width: min(220px, calc(100vw - 132px));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .gqo-comment-list,
